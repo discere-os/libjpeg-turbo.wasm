@@ -1,0 +1,91 @@
+{
+  "name": "@discere-os/libjpeg-turbo.wasm",
+  "version": "3.0.5-discere.1",
+  "description": "High-performance JPEG processing library for WebAssembly applications",
+  "type": "module",
+  "main": "dist/lib/bindings.js",
+  "types": "dist/lib/types.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib/types.d.ts",
+      "import": "./dist/lib/bindings.js"
+    },
+    "./side": {
+      "types": "./dist/lib/types.d.ts",
+      "wasm": "./dist/libjpeg-turbo-side.wasm"
+    },
+    "./main": {
+      "types": "./dist/lib/types.d.ts",
+      "wasm": "./dist/libjpeg-turbo.wasm",
+      "js": "./dist/libjpeg-turbo.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "wasm/",
+    "src/lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run build:wasm && npm run build:types",
+    "build:wasm": "npm run build:side && npm run build:main",
+    "build:side": "emcmake cmake -B build-side -DCMAKE_BUILD_TYPE=Release -DBUILD_SIDE_MODULE=ON -DBUILD_MAIN_MODULE=OFF && cmake --build build-side --parallel",
+    "build:main": "emcmake cmake -B build-main -DCMAKE_BUILD_TYPE=Release -DBUILD_SIDE_MODULE=OFF -DBUILD_MAIN_MODULE=ON && cmake --build build-main --parallel",
+    "build:types": "tsc --build",
+    "clean": "rm -rf build-* dist/",
+    "test": "npm run test:side && npm run test:main",
+    "test:side": "node --experimental-wasm-modules dist/test/test-side.js",
+    "test:main": "node --experimental-wasm-modules dist/test/test-main.js",
+    "benchmark": "node --experimental-wasm-modules dist/test/benchmark.js",
+    "demo": "node --experimental-wasm-modules dist/demo.js",
+    "lint": "eslint src/ --ext .ts",
+    "format": "prettier --write src/",
+    "validate": "npm run lint && npm run build && npm run test"
+  },
+  "keywords": [
+    "jpeg",
+    "image",
+    "compression",
+    "wasm",
+    "webassembly",
+    "emscripten",
+    "libjpeg-turbo",
+    "webgpu",
+    "simd"
+  ],
+  "author": "Superstruct Ltd <isaac@superstruct.org>",
+  "license": "IJG AND BSD-3-Clause",
+  "homepage": "https://github.com/discere-os/libjpeg-turbo.wasm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/discere-os/libjpeg-turbo.wasm.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "browserList": [
+    "Chrome >= 113",
+    "Edge >= 113",
+    "Chrome Android >= 139"
+  ],
+  "devDependencies": {
+    "@types/emscripten": "^1.39.13",
+    "@types/node": "^20.17.10",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {},
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/discere-os"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

@@ -15,6 +15,106 @@ endif()
 
 project(libjpeg-turbo C)
 set(VERSION 3.1.2)
+
+#
+# WASM-Native Dual Build Architecture (Early Configuration)
+# Copyright © 2025 Superstruct Ltd, New Zealand
+# Licensed under libjpeg-turbo licenses (IJG + Modified BSD)
+#
+# This must be configured before add_subdirectory() calls
+# so that variables are available to subdirectory CMakeLists.txt files
+#
+
+# Detect Emscripten build environment
+if(EMSCRIPTEN)
+    message(STATUS "=== WASM-Native Build Configuration for libjpeg-turbo ===")
+
+    # Build type configuration
+    option(BUILD_SIDE_MODULE "Build SIDE_MODULE for dynamic linking" ON)
+    option(BUILD_MAIN_MODULE "Build MAIN_MODULE for NPM distribution" ON)
+
+    # Maximum feature enablement - no browser compatibility concerns
+    set(WASM_COMMON_FLAGS
+        "-msimd128"              # SIMD instructions (WebGPU+SIMD browsers only)
+        "-pthread"               # Threading with SharedArrayBuffer
+        "-fPIC"                  # Position independent code for dynamic loading
+        "-O3"                    # Maximum optimization
+        "-flto"                  # Link-time optimization
+        "-DNDEBUG"              # Release build optimizations
+    )
+
+    # Native-level browser API integration for JPEG processing
+    set(WASM_LINK_FLAGS_COMMON
+        "-s ALLOW_MEMORY_GROWTH=1"        # Dynamic memory management
+        "-s FORCE_FILESYSTEM=1"           # Full filesystem API access
+        "-s USE_PTHREADS=1"              # Threading support
+        "-s SHARED_MEMORY=1"             # SharedArrayBuffer for zero-copy
+        "-s ASYNCIFY=1"                  # Async/await in C/C++
+        "-s DISABLE_EXCEPTION_CATCHING=1" # Performance optimization
+        "-s INITIAL_MEMORY=64MB"         # Generous initial allocation for JPEG processing
+        "-s MAXIMUM_MEMORY=4GB"          # No artificial memory limits
+        "-s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency" # Utilize all CPU cores
+    )
+
+    # Graphics and imaging specific features for JPEG processing
+    list(APPEND WASM_LINK_FLAGS_COMMON
+        "-s USE_WEBGPU=1"               # WebGPU compute for parallel JPEG processing
+        "-s AUDIO_WORKLET=1"            # WebAudio for multimedia applications
+    )
+
+    message(STATUS "  WASM SIMD support:                  ENABLED (msimd128)")
+    message(STATUS "  WASM Threading:                     ENABLED (pthreads + SharedArrayBuffer)")
+    message(STATUS "  WASM WebGPU:                        ENABLED (compute shaders)")
+    message(STATUS "  WASM Memory limits:                 4GB maximum, 64MB initial")
+
+    # SIDE_MODULE configuration
+    if(BUILD_SIDE_MODULE)
+        message(STATUS "  SIDE_MODULE build:                  ENABLED")
+        set(WASM_COMPAT_SIDE_SOURCE "${CMAKE_SOURCE_DIR}/wasm/wasm_compat_side.c" CACHE INTERNAL "SIDE_MODULE compatibility source")
+        add_compile_definitions(LIBJPEG_TURBO_WASM_SIDE_MODULE=1)
+
+        set(WASM_LINK_FLAGS_SIDE
+            "-s SIDE_MODULE=1"
+            # System libraries provided by MAIN_MODULE
+            # NEVER link zlib - use @discere-os/zlib.wasm SIDE_MODULE via dlopen()
+        )
+    endif()
+
+    # MAIN_MODULE configuration
+    if(BUILD_MAIN_MODULE)
+        message(STATUS "  MAIN_MODULE build:                  ENABLED")
+        set(WASM_COMPAT_MAIN_SOURCE "${CMAKE_SOURCE_DIR}/wasm/wasm_compat_main.c" CACHE INTERNAL "MAIN_MODULE compatibility source")
+        add_compile_definitions(LIBJPEG_TURBO_WASM_MAIN_MODULE=1)
+
+        set(WASM_LINK_FLAGS_MAIN
+            "-s MAIN_MODULE=1"
+            "-s MODULARIZE=1"
+            "-s EXPORT_ES6=1"
+            "-s EXPORT_NAME=LibJPEGTurboWASM"
+            # Include ALL system libraries for standalone usage
+            "-s USE_ZLIB=1"              # Built-in zlib for deflate compression
+            # Advanced features for maximum performance
+            "--closure=1"                 # Google Closure Compiler optimization
+            "-s PROXY_TO_PTHREAD=1"      # Main thread responsiveness
+        )
+    endif()
+
+    # Apply WASM flags to all targets
+    if(WASM_COMMON_FLAGS)
+        add_compile_options(${WASM_COMMON_FLAGS})
+    endif()
+
+    if(BUILD_SIDE_MODULE AND WASM_LINK_FLAGS_SIDE)
+        add_link_options(${WASM_LINK_FLAGS_COMMON} ${WASM_LINK_FLAGS_SIDE})
+    endif()
+
+    if(BUILD_MAIN_MODULE AND WASM_LINK_FLAGS_MAIN)
+        add_link_options(${WASM_LINK_FLAGS_COMMON} ${WASM_LINK_FLAGS_MAIN})
+    endif()
+
+    message(STATUS "=== Early WASM Configuration Complete ===")
+    message(STATUS "")
+endif()
 set(COPYRIGHT_YEAR "1991-2025")
 string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
 list(GET VERSION_TRIPLET 0 VERSION_MAJOR)
@@ -2117,3 +2217,66 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.i
   "cmake_uninstall.cmake" IMMEDIATE @ONLY)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
+
+#
+# WASM-Native Compatibility Layer Integration
+# Add WASM-specific sources to main library targets when building with Emscripten
+#
+if(EMSCRIPTEN)
+    # Add SIDE_MODULE compatibility layer
+    if(BUILD_SIDE_MODULE AND DEFINED WASM_COMPAT_SIDE_SOURCE AND TARGET jpeg-static)
+        target_sources(jpeg-static PRIVATE ${WASM_COMPAT_SIDE_SOURCE})
+        message(STATUS "  SIDE_MODULE compatibility layer added to jpeg-static library")
+    endif()
+
+    if(BUILD_SIDE_MODULE AND DEFINED WASM_COMPAT_SIDE_SOURCE AND TARGET turbojpeg-static)
+        target_sources(turbojpeg-static PRIVATE ${WASM_COMPAT_SIDE_SOURCE})
+        message(STATUS "  SIDE_MODULE compatibility layer added to turbojpeg-static library")
+    endif()
+
+    # Add MAIN_MODULE compatibility layer
+    if(BUILD_MAIN_MODULE AND DEFINED WASM_COMPAT_MAIN_SOURCE AND TARGET jpeg-static)
+        target_sources(jpeg-static PRIVATE ${WASM_COMPAT_MAIN_SOURCE})
+        message(STATUS "  MAIN_MODULE compatibility layer added to jpeg-static library")
+    endif()
+
+    if(BUILD_MAIN_MODULE AND DEFINED WASM_COMPAT_MAIN_SOURCE AND TARGET turbojpeg-static)
+        target_sources(turbojpeg-static PRIVATE ${WASM_COMPAT_MAIN_SOURCE})
+        message(STATUS "  MAIN_MODULE compatibility layer added to turbojpeg-static library")
+    endif()
+
+    # Create WASM modules from static libraries
+    if(BUILD_SIDE_MODULE AND TARGET turbojpeg-static)
+        add_custom_target(libjpeg-turbo-side
+            COMMAND emcc
+                ${WASM_COMMON_FLAGS}
+                -sSIDE_MODULE=1
+                -sEXPORT_ALL=1
+                --whole-archive ${CMAKE_CURRENT_BINARY_DIR}/libturbojpeg.a
+                -o ${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo-side.wasm
+            DEPENDS turbojpeg-static
+            COMMENT "Creating SIDE_MODULE WASM from turbojpeg-static"
+        )
+        message(STATUS "  SIDE_MODULE target: libjpeg-turbo-side.wasm")
+    endif()
+
+    if(BUILD_MAIN_MODULE AND TARGET turbojpeg-static)
+        add_custom_target(libjpeg-turbo-main
+            COMMAND emcc
+                ${WASM_COMMON_FLAGS}
+                -sMAIN_MODULE=1
+                -sEXPORT_ALL=1
+                -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','stringToUTF8','UTF8ToString','lengthBytesUTF8']
+                -sALLOW_MEMORY_GROWTH=1
+                -sINITIAL_MEMORY=67108864
+                -sMAXIMUM_MEMORY=4294967296
+                -sMODULARIZE=1
+                -sEXPORT_NAME=createLibJPEGTurboModule
+                --whole-archive ${CMAKE_CURRENT_BINARY_DIR}/libturbojpeg.a
+                -o ${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo.js
+            DEPENDS turbojpeg-static
+            COMMENT "Creating MAIN_MODULE WASM from turbojpeg-static"
+        )
+        message(STATUS "  MAIN_MODULE target: libjpeg-turbo.js/.wasm")
+    endif()
+endif()

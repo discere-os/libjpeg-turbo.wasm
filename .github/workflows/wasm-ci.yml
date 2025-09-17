@@ -211,27 +211,28 @@ jobs:
         id: release-version
         run: echo "VERSION=v$(deno eval 'console.log(JSON.parse(Deno.readTextFileSync("deno.json")).version)')" >> $GITHUB_OUTPUT
 
+      - name: Install Wrangler CLI
+        run: npm install -g wrangler
+
       - name: Deploy versioned WASM to Cloudflare R2
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: |
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/side/libjpeg-turbo-side.wasm --file=install/wasm/libjpeg-turbo-side.wasm --content-type=application/wasm
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/main/libjpeg-turbo-release.js --file=install/wasm/libjpeg-turbo-release.js --content-type=application/javascript
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/main/libjpeg-turbo-fallback.js --file=install/wasm/libjpeg-turbo-fallback.js --content-type=application/javascript
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/package.json --file=deno.json --content-type=application/json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/side/libjpeg-turbo-side.wasm --file=install/wasm/libjpeg-turbo-side.wasm --content-type=application/wasm
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/main/libjpeg-turbo-release.js --file=install/wasm/libjpeg-turbo-release.js --content-type=application/javascript
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/main/libjpeg-turbo-fallback.js --file=install/wasm/libjpeg-turbo-fallback.js --content-type=application/javascript
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.release-version.outputs.VERSION }}/package.json --file=deno.json --content-type=application/json
 
       - name: Deploy latest WASM to Cloudflare R2
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: |
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/side/libjpeg-turbo-side.wasm --file=install/wasm/libjpeg-turbo-side.wasm --content-type=application/wasm
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/main/libjpeg-turbo-release.js --file=install/wasm/libjpeg-turbo-release.js --content-type=application/javascript
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/main/libjpeg-turbo-fallback.js --file=install/wasm/libjpeg-turbo-fallback.js --content-type=application/javascript
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/package.json --file=deno.json --content-type=application/json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/side/libjpeg-turbo-side.wasm --file=install/wasm/libjpeg-turbo-side.wasm --content-type=application/wasm
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/main/libjpeg-turbo-release.js --file=install/wasm/libjpeg-turbo-release.js --content-type=application/javascript
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/main/libjpeg-turbo-fallback.js --file=install/wasm/libjpeg-turbo-fallback.js --content-type=application/javascript
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/latest/package.json --file=deno.json --content-type=application/json
 
       - name: Verify Cloudflare deployment
         run: |
@@ -264,16 +265,18 @@ jobs:
         id: version
         run: echo "VERSION=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Install Wrangler CLI
+        run: npm install -g wrangler
+
       - name: Deploy snapshot WASM to Cloudflare R2
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: |
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/side/libjpeg-turbo-side.wasm --file=install/wasm/libjpeg-turbo-side.wasm --content-type=application/wasm
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/main/libjpeg-turbo-release.js --file=install/wasm/libjpeg-turbo-release.js --content-type=application/javascript
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/main/libjpeg-turbo-fallback.js --file=install/wasm/libjpeg-turbo-fallback.js --content-type=application/javascript
-            r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/package.json --file=deno.json --content-type=application/json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/side/libjpeg-turbo-side.wasm --file=install/wasm/libjpeg-turbo-side.wasm --content-type=application/wasm
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/main/libjpeg-turbo-release.js --file=install/wasm/libjpeg-turbo-release.js --content-type=application/javascript
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/main/libjpeg-turbo-fallback.js --file=install/wasm/libjpeg-turbo-fallback.js --content-type=application/javascript
+          wrangler r2 object put discere-os-wasm-production/libjpeg-turbo.wasm/${{ steps.version.outputs.VERSION }}/package.json --file=deno.json --content-type=application/json
 
       - name: Log deployment success
         run: echo "✅ Snapshot ${{ steps.version.outputs.VERSION }} deployed to Cloudflare R2"

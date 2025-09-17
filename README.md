@@ -1,6 +1,12 @@
 # @discere-os/libjpeg-turbo.wasm
 
-WASM-native libjpeg-turbo fork. Complete JPEG processing library optimized for WebGPU acceleration and SIMD vectorization.
+WebAssembly port of libjpeg-turbo - High-performance JPEG codec library optimized for SIMD and WebGPU acceleration.
+
+[![CI/CD](https://github.com/discere-os/discere-nucleus/actions/workflows/libjpeg-turbo-wasm-ci.yml/badge.svg)](https://github.com/discere-os/discere-nucleus/actions)
+[![JSR](https://jsr.io/badges/@discere-os/libjpeg-turbo.wasm)](https://jsr.io/@discere-os/libjpeg-turbo.wasm)
+[![npm version](https://badge.fury.io/js/@discere-os%2Flibjpeg-turbo.wasm.svg)](https://badge.fury.io/js/@discere-os%2Flibjpeg-turbo.wasm)
+[![License](https://img.shields.io/badge/License-IJG+BSD-blue.svg)](LICENSE.md)
+[![Status](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/discere-os/discere-nucleus)
 
 ## Features
 

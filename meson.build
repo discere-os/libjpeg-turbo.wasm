@@ -71,8 +71,9 @@ shared_module('libjpeg-side',
   files('wasm/libjpeg_wasm_side.c') + jpeg_sources,
   include_directories: inc,
   name_prefix: '',
+  name_suffix: 'wasm',
   c_args: cargs,
-  link_args: ['-sSIDE_MODULE=2','-fPIC','-O3','-flto','-sEXPORTED_FUNCTIONS=["_libjpeg_wasm_version"]'],
+  link_args: ['-sSIDE_MODULE=2','-fPIC','-O3','-flto','-sERROR_ON_UNDEFINED_SYMBOLS=0','-sEXPORTED_FUNCTIONS=["_libjpeg_wasm_version"]'],
   install: true,
   install_dir: get_option('libdir')
 )

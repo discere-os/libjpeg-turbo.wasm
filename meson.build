@@ -77,3 +77,11 @@ shared_module('libjpeg-side',
   install: true,
   install_dir: get_option('libdir')
 )
+
+# Generate WASM manifest after build
+manifest_script = find_program('../../../../scripts/generate-manifest-meson.sh', required: false)
+if manifest_script.found()
+  run_target('manifest',
+    command: [manifest_script, meson.project_source_root(), meson.project_build_root()]
+  )
+endif

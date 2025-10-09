@@ -18,6 +18,14 @@ conf_data.set('D_ARITH_CODING_SUPPORTED', 1)
 conf_data.set('WITH_SIMD', simd ? 1 : false)
 conf_data.set('RIGHT_SHIFT_IS_UNSIGNED', false)
 
+# jconfigint.h variables
+conf_data.set('BUILD', '20250110')
+conf_data.set('CMAKE_PROJECT_NAME', 'libjpeg-turbo')
+conf_data.set('SIZE_T', 4)  # WASM32 is 32-bit
+conf_data.set('HIDDEN', '__attribute__((visibility("hidden")))')
+conf_data.set('INLINE', '__inline__')
+conf_data.set('THREAD_LOCAL', '__thread')
+
 configure_file(input: 'src/jconfig.h.in', output: 'jconfig.h',
                configuration: conf_data, format: 'cmake')
 configure_file(input: 'src/jconfigint.h.in', output: 'jconfigint.h',

@@ -8,9 +8,20 @@ endif
 
 inc = include_directories('src', '.')
 
-# Generate config headers similar to CMake
-configure_file(input: 'src/jconfig.h.in', output: 'jconfig.h', configuration: configuration_data())
-configure_file(input: 'src/jconfigint.h.in', output: 'jconfigint.h', configuration: configuration_data())
+# Generate config headers
+conf_data = configuration_data()
+conf_data.set('JPEG_LIB_VERSION', 80)
+conf_data.set('VERSION', '3.0.5')
+conf_data.set('LIBJPEG_TURBO_VERSION_NUMBER', 3000500)
+conf_data.set('C_ARITH_CODING_SUPPORTED', 1)
+conf_data.set('D_ARITH_CODING_SUPPORTED', 1)
+conf_data.set('WITH_SIMD', simd ? 1 : false)
+conf_data.set('RIGHT_SHIFT_IS_UNSIGNED', false)
+
+configure_file(input: 'src/jconfig.h.in', output: 'jconfig.h',
+               configuration: conf_data, format: 'cmake')
+configure_file(input: 'src/jconfigint.h.in', output: 'jconfigint.h',
+               configuration: conf_data, format: 'cmake')
 
 jpeg_sources = files(
   'src/jcapimin.c',

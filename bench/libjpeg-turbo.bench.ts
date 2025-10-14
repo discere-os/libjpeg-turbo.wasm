@@ -1,12 +1,12 @@
 /**
- * ${LIB_TITLE} WASM Benchmarks
+ * LibjpegTurbo WASM Benchmarks
  */
 
-import ${LIB_TITLE}WASM from "../src/lib/index.ts"
+import LibjpegTurboWASM from "../src/lib/index.ts"
 
-Deno.bench("${LIB_NAME} initialization", {
+Deno.bench("libjpeg-turbo initialization", {
   baseline: true
 }, async () => {
-  const lib = new ${LIB_TITLE}WASM()
+  const lib = new LibjpegTurboWASM()
   await lib.initialize()
 })
